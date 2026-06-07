@@ -1,0 +1,11 @@
+# Credentials & Secrets
+credentials.json
+.env
+
+# Development Folders & Cache
+env/
+__pycache__/
+
+# Config files
+config.json
+team_info.csv
