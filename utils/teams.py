@@ -10,7 +10,8 @@ class Team:
     team_name: str
     role_id: int
     arena_name: str
-    
+    abbreviation: str
+
 TEAMS = []
 TEAM_INFO_FILE = "team_info.csv"
 
@@ -32,12 +33,12 @@ def save_teams_from_sheets(bot) -> str:
 
     with open(TEAM_INFO_FILE, mode="w", newline="", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["team_name", "role_id", "arena_name"])
+        writer.writerow(["team_name", "role_id", "arena_name", "abbreviation"])
 
         for row in rows:
             if len(row) > 5 and row[2].strip():
                 # Assuming Schema: A=Conference, B=Division, C=Team Name, D=Abbreviation, E=Home Arena, F=Role ID
-                writer.writerow([row[2].strip(), row[5].strip(), row[4].strip()])
+                writer.writerow([row[2].strip(), row[5].strip(), row[4].strip(), row[3].strip()])
 
     return "✅ Team information updated successfully."
 
@@ -53,6 +54,7 @@ def load_teams() -> None:
                     team_name=row["team_name"],
                     role_id=int(row["role_id"]),
                     arena_name=row["arena_name"],
+                    abbreviation=row["abbreviation"]
                 )
                 TEAMS.append(team)
     except FileNotFoundError:
@@ -64,6 +66,12 @@ def is_valid_team_name(team_name: str) -> bool:
 
 def get_team_names() -> list[str]:
     return [team.team_name for team in TEAMS]
+
+def get_abbreviation_by_team_name(team_name: str) -> str | None:
+    for team in TEAMS:
+        if team.team_name == team_name:
+            return team.abbreviation
+    return None
             
 def get_role_id_by_team_name(team_name: str) -> int | None:
     for team in TEAMS:

@@ -2,9 +2,10 @@ import logging
 from enum import Enum
 
 import discord
+from discord.utils import get
 
 from utils.config import ADMIN_ROLE_ID, LOGGING_CHANNEL_ID
-from utils.teams import get_role_id_by_team_name, get_team_names
+from utils.teams import get_abbreviation_by_team_name, get_role_id_by_team_name, get_team_names
 
 logger = logging.getLogger("discord")
 
@@ -112,13 +113,23 @@ def create_final_result_string(
     )
     suffix = f"/{result_type}" if result_type in ["OT", "SO"] else ""
 
+    # Grab team emoji. Emojis should be named after their abbreviations
+    home_abbr = get_abbreviation_by_team_name(home_team)
+    away_abbr = get_abbreviation_by_team_name(away_team)
+    
+    home_emoji = get(interaction.guild.emojis, name=home_abbr)
+    away_emoji = get(interaction.guild.emojis, name=away_abbr)
+    
+    home_emoji_str = f"{str(home_emoji)}" if home_emoji else ""
+    away_emoji_str = f"{str(away_emoji)}" if away_emoji else ""
+    
     # Bold the winning team in the announcement
     if away_score > home_score:
         announcement = (
-            f"**Final: {away_role} {away_score}** - {home_score}{suffix} {home_role}"
+            f"**Final: {away_emoji_str}{away_role} {away_score}** - {home_score}{suffix} {home_role}{home_emoji_str}"
         )
     else:
-        announcement = f"**Final:** {away_role} {away_score} - **{home_score}**{suffix} {home_role}"
+        announcement = f"**Final:** {away_emoji_str}{away_role} {away_score} - **{home_score}**{suffix} {home_role}{home_emoji_str}"
         
     return announcement
 
