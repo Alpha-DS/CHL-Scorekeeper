@@ -4,7 +4,7 @@ import wikitextparser as wtp
 from enum import Enum
 import re
 
-from utils.config import MEDIAWIKI_PAGE_TITLE
+from utils.config import MEDIAWIKI_BOT_PASSWORD, MEDIAWIKI_BOT_USERNAME, MEDIAWIKI_PAGE_TITLE
 
 class TeamResult(Enum):
     REGULATION_WIN = "Regulation Win"
@@ -155,15 +155,55 @@ def append_game_log(raw_text: str, home_team: str, home_score: int, away_team: s
     
     return str(parsed)
 
-def update_wiki(bot, home_team: str, home_score: int, away_team: str, away_score: int, result_type: str, arena: str):
-    # Fetch current wiki content
-    page = bot.wiki.pages[MEDIAWIKI_PAGE_TITLE]
-    current_content = page.text()
-    
-    # Update standings and game log
-    updated_content = update_standings(current_content, home_team, home_score, away_team, away_score, result_type)
-    updated_content = append_game_log(updated_content, home_team, home_score, away_team, away_score, result_type, arena)
-    
-    # Save updated content back to wiki
-    page.save(updated_content, summary=f"CHL Scorekeeping Bot: Updated standings and game log for {away_team} vs {home_team}", bot=True)
-    
+def update_wiki(
+    bot,
+    home_team: str,
+    home_score: int,
+    away_team: str,
+    away_score: int,
+    result_type: str,
+    arena: str,
+):
+    for attempt in range(2):
+        try:
+            # Fetch current wiki content
+            page = bot.wiki.pages[MEDIAWIKI_PAGE_TITLE]
+            current_content = page.text()
+
+            # Update standings and game log
+            updated_content = update_standings(
+                current_content,
+                home_team,
+                home_score,
+                away_team,
+                away_score,
+                result_type,
+            )
+            updated_content = append_game_log(
+                updated_content,
+                home_team,
+                home_score,
+                away_team,
+                away_score,
+                result_type,
+                arena,
+            )
+
+            # Save updated content back to wiki
+            page.save(
+                updated_content,
+                summary=f"CHL Scorekeeping Bot: Updated standings and game log for {away_team} vs {home_team}",
+                bot=True,
+            )
+            return
+
+        except Exception as e:
+            if attempt == 0:
+                try:
+                    bot.wiki.login(
+                        username=MEDIAWIKI_BOT_USERNAME, password=MEDIAWIKI_BOT_PASSWORD
+                    )
+                except Exception as login_err:
+                    raise login_err
+            else:
+                raise e
